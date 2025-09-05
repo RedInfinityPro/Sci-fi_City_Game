@@ -1,63 +1,106 @@
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.plaf.basic.BasicScrollBarUI;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.util.Random;
 
 public class Main extends JFrame {
-    public static final int WINDOW_WIDTH = 960;
-    public static final int WINDOW_HEIGHT = 540;
-    // assets
-    private static final String PATH = "assets/jupiter2_4k.jpg";
+    private Container cp;
+    private static final int WINDOW_WIDTH = 960;
+    private static final int WINDOW_HEIGHT = 540;
 
     Main() {
-        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        setSize(screenSize);
+        setTitle("Home");
+        setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setTitle("App");
-        setBackground(Color.BLACK);
-        // Transparent panel
-        TransparentPanel transparent_panel = new TransparentPanel();
-        // Background
-        ScrollingBackground scrolling_background = new ScrollingBackground(PATH);
-        scrolling_background.setLayout(new BorderLayout());
-        scrolling_background.add(transparent_panel, BorderLayout.CENTER);
-        // Add layered pane to frame
-        setContentPane(scrolling_background);
+        // Setup container
+        cp = getContentPane();
+        cp.setLayout(new BorderLayout(10, 10));
+        cp.setBackground(Color.DARK_GRAY);
+        ((JPanel) cp).setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        // scroll bar
+        JPanel body = new JPanel();
+        RecomputeGrid recompute_grid = new RecomputeGrid(body, 1000);
+        body.setBackground(Color.DARK_GRAY);
+        // Fill grid with empty panels to make it visible
+        for (int x = 0; x < 10; x++) {
+            for (int y = 0; y < 100; y++) {
+                JPanel cell = new Cell(0, 0, x, y);
+                body.add(cell);
+            }
+        }
+        // Wrap grid in scroll pane
+        JScrollPane scrollPane = new JScrollPane(body, JScrollPane.VERTICAL_SCROLLBAR_NEVER,
+                JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        cp.add(scrollPane, BorderLayout.CENTER);
+        // visable
         setVisible(true);
     }
 
-    static class ScrollingBackground extends JPanel implements ActionListener {
-        private Image backgroundImage;
-        private int imageX, imageY;
-        private Timer timer;
-        private int imageWidth, imageHight;
+    private class RecomputeGrid {
+        private int number_rows;
+        
+        RecomputeGrid(JPanel body, int number_columns) {
+            number_rows = (9/100) * number_columns;
+            body.setLayout(new GridLayout(number_rows, number_columns, 0, 0));
+        }
+    }
 
-        private ScrollingBackground(String PATH) {
-            backgroundImage = new ImageIcon(getClass().getResource(PATH)).getImage();
-            imageX = 0;
-            timer = new Timer(30, this);
-            timer.start();
+    private class Cell extends JPanel {
+        private Color original_color;
+        private Color active_color;
+        private Random number;
+        
+        Cell(int width, int height, int x, int y) {
+            this.number = new Random();
+            PaintArea(x, y);
+            BuildPanel(width, height);
+
+            addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseEntered(MouseEvent e) {
+                    hovered = true;
+                    setBackground(active_color);
+                    repaint();
+                }
+                @Override
+                public void mouseExited(MouseEvent e) {
+                    hovered = false;
+                    setBackground(original_color);
+                    repaint();
+                }
+            });
         }
 
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            imageHight = backgroundImage.getHeight(this);
-            imageWidth = backgroundImage.getWidth(this);
-            imageWidth = getWidth();
-            imageHight = getHeight();
-            g.drawImage(backgroundImage, imageX, 0, this);
-            g.drawImage(backgroundImage, imageX - imageWidth, 0, imageWidth, imageHight, this);
+        private void BuildPanel(int width, int height) {
+            setPreferredSize(new Dimension(width, height));
+            setLayout(new BorderLayout());
+            setBorder(BorderFactory.createDashedBorder(null, 1.0f, 1.0f));
+            setBackground(original_color);
         }
 
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            imageX -= 2;
-            if (imageX < -imageWidth) {
-                imageX = 0;
+        private void PaintArea(int x, int y) {
+            Color panel_color = Color.WHITE;
+            if (x > 0) {
+                double state = number.nextDouble();
+                if (state <= 0.5) {
+                    panel_color = Color.GREEN;
+                } else {
+                    panel_color = Color.CYAN;
+                }
+            } else {
+                panel_color = Color.CYAN;
             }
-            repaint();
+
+            original_color = panel_color;
+            active_color = original_color.darker();
         }
     }
 

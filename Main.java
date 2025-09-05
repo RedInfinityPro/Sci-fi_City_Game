@@ -1,13 +1,7 @@
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.plaf.basic.BasicScrollBarUI;
-
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.util.Random;
 
 public class Main extends JFrame {
@@ -27,12 +21,14 @@ public class Main extends JFrame {
         ((JPanel) cp).setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         // scroll bar
         JPanel body = new JPanel();
-        RecomputeGrid recompute_grid = new RecomputeGrid(body, 1000);
+        int number_columns = 100;
+        RecomputeGrid recompute_grid = new RecomputeGrid(body, number_columns);
+        int cellSize = WINDOW_WIDTH / number_columns;
         body.setBackground(Color.DARK_GRAY);
         // Fill grid with empty panels to make it visible
-        for (int x = 0; x < 10; x++) {
+        for (int x = 0; x < 100; x++) {
             for (int y = 0; y < 100; y++) {
-                JPanel cell = new Cell(0, 0, x, y);
+                JPanel cell = new Cell(cellSize, cellSize, x, y);
                 body.add(cell);
             }
         }
@@ -48,7 +44,9 @@ public class Main extends JFrame {
         private int number_rows;
         
         RecomputeGrid(JPanel body, int number_columns) {
-            number_rows = (9/100) * number_columns;
+            int cellSize = WINDOW_WIDTH / number_columns;
+            number_rows = WINDOW_HEIGHT / cellSize;
+
             body.setLayout(new GridLayout(number_rows, number_columns, 0, 0));
         }
     }
@@ -66,13 +64,11 @@ public class Main extends JFrame {
             addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseEntered(MouseEvent e) {
-                    hovered = true;
                     setBackground(active_color);
                     repaint();
                 }
                 @Override
                 public void mouseExited(MouseEvent e) {
-                    hovered = false;
                     setBackground(original_color);
                     repaint();
                 }
